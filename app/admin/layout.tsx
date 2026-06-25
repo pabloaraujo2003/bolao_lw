@@ -7,12 +7,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('is_admin').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) redirect('/')
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin', label: 'Dashboard', exact: true },
     { href: '/admin/jogos', label: 'Jogos' },
     { href: '/admin/resultados', label: 'Resultados' },
     { href: '/admin/participantes', label: 'Participantes' },
@@ -21,24 +20,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-2">
-        <span className="text-xs px-2 py-1 rounded-full font-bold" style={{ background: '#C9A800', color: '#0D1B2A' }}>
-          ADMIN
-        </span>
-        <h1 className="text-lg font-bold" style={{ color: '#F0F4F8' }}>Painel Administrativo</h1>
-      </div>
+      {/* Admin header */}
+      <div className="fade-1" style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+          <span className="badge badge-amber" style={{ fontSize: '.62rem' }}>ADMIN</span>
+          <h1 style={{ fontSize: '.95rem', fontWeight: 600, color: 'var(--text)' }}>Painel Administrativo</h1>
+        </div>
 
-      <div className="flex gap-1 mb-8 flex-wrap">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="px-4 py-2 rounded-xl text-sm font-medium"
-            style={{ background: '#162233', color: '#7A8FA6', border: '1px solid #1E2F45' }}
-          >
-            {item.label}
-          </Link>
-        ))}
+        {/* Sub-nav */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              style={{
+                padding: '7px 14px', borderRadius: '9px',
+                fontSize: '.8rem', fontWeight: 500,
+                background: 'var(--s1)', color: 'var(--muted)',
+                border: '1px solid var(--border)',
+                textDecoration: 'none',
+                transition: 'color .15s, border-color .15s',
+              }}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {children}

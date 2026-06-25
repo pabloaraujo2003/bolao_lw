@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { login } from '@/app/actions/auth'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -17,75 +19,70 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+    } else if (result?.redirectTo) {
+      router.push(result.redirectTo)
+      router.refresh()
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0D1B2A' }}>
-      <div className="w-full max-w-md">
-        {/* Logo / título */}
-        <div className="text-center mb-8">
-          <div className="text-4xl mb-2">⚽</div>
-          <h1 className="text-2xl font-bold" style={{ color: '#FFD700' }}>Bolão da Copa 2026</h1>
-          <p className="text-sm mt-1" style={{ color: '#7A8FA6' }}>Entre na sua conta para fazer seus palpites</p>
+    <main style={{
+      minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem',
+    }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        {/* Logo mark */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="display" style={{ fontSize: '3rem', color: 'var(--green)', lineHeight: 1, marginBottom: '.25rem' }}>
+            BOLÃO
+          </div>
+          <div className="display" style={{ fontSize: '1.25rem', color: 'var(--muted)', letterSpacing: '.1em' }}>
+            COPA 2026
+          </div>
         </div>
 
-        <div className="rounded-2xl p-8" style={{ background: '#162233' }}>
-          <h2 className="text-lg font-semibold mb-6" style={{ color: '#F0F4F8' }}>Entrar</h2>
+        <div className="auth-card">
+          <h1 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text)', marginBottom: '1.5rem' }}>
+            Entrar na conta
+          </h1>
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#1E2F45', color: '#F44336', border: '1px solid #F44336' }}>
+            <div style={{
+              background: 'var(--red-dim)', border: '1px solid rgba(255,77,77,.3)',
+              borderRadius: '10px', padding: '10px 14px',
+              fontSize: '.82rem', color: 'var(--red)', marginBottom: '1rem',
+            }}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>E-mail</label>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:ring-2"
-                style={{
-                  background: '#1E2F45',
-                  color: '#F0F4F8',
-                  border: '1px solid #1E2F45',
-                  '--tw-ring-color': '#FFD700',
-                } as React.CSSProperties}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                E-MAIL
+              </label>
+              <input name="email" type="email" required placeholder="seu@email.com" className="field" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>Senha</label>
-              <input
-                name="password"
-                type="password"
-                required
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:ring-2"
-                style={{
-                  background: '#1E2F45',
-                  color: '#F0F4F8',
-                  border: '1px solid #1E2F45',
-                } as React.CSSProperties}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                SENHA
+              </label>
+              <input name="password" type="password" required placeholder="••••••••" className="field" />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg, #FFD700, #C9A800)', color: '#0D1B2A' }}
+              className="btn btn-green"
+              style={{ padding: '13px', fontSize: '.9rem', marginTop: '4px', width: '100%' }}
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm" style={{ color: '#7A8FA6' }}>
+          <p style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '.82rem', color: 'var(--muted)' }}>
             Não tem conta?{' '}
-            <Link href="/cadastro" className="font-medium hover:underline" style={{ color: '#FFD700' }}>
+            <Link href="/cadastro" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
               Cadastre-se
             </Link>
           </p>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchFinishedFixturesSince, mapFixtureToGame } from '@/lib/api-football'
 import { calcPoints } from '@/lib/scoring'
+import { invalidate } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -56,6 +57,10 @@ export async function GET(request: NextRequest) {
     }
 
     await admin.from('sync_log').insert({ games_updated: gamesUpdated, status: 'success' })
+
+    if (gamesUpdated > 0) {
+      await invalidate('games', 'ranking')
+    }
 
     return NextResponse.json({ ok: true, gamesUpdated })
   } catch (err: any) {

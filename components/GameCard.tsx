@@ -6,17 +6,17 @@ import type { GameWithPrediction } from '@/lib/types'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR', {
-    weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    weekday: 'short', day: '2-digit', month: '2-digit',
+    hour: '2-digit', minute: '2-digit',
   })
 }
 
 function isGameOpen(game: { game_date: string; is_finished: boolean }) {
   if (game.is_finished) return false
-  const cutoff = new Date(game.game_date).getTime() - 30 * 60 * 1000
-  return Date.now() < cutoff
+  return Date.now() < new Date(game.game_date).getTime() - 30 * 60 * 1000
 }
 
-export function GameCard({ game }: { game: GameWithPrediction }) {
+export function GameCard({ game, index = 0 }: { game: GameWithPrediction; index?: number }) {
   const open = isGameOpen(game)
   const pred = game.prediction
 
@@ -37,84 +37,115 @@ export function GameCard({ game }: { game: GameWithPrediction }) {
     const res = await savePrediction(game.id, h, a)
     setLoading(false)
     if (res?.error) setFeedback({ ok: false, msg: res.error })
-    else setFeedback({ ok: true, msg: 'Palpite salvo!' })
+    else setFeedback({ ok: true, msg: 'Salvo!' })
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '3rem', textAlign: 'center', background: '#0D1B2A', color: '#F0F4F8',
-    border: '1px solid #1E2F45', borderRadius: '8px', padding: '6px 0', fontSize: '1.1rem', fontWeight: 700,
-  }
+  const fadeClass = `fade-${Math.min(index + 1, 6)}`
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: '#162233', border: '1px solid #1E2F45' }}>
-      {/* Header: stage + date */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs px-2 py-1 rounded-full" style={{ background: '#1E2F45', color: '#7A8FA6' }}>
+    <div
+      className={`card ${fadeClass}`}
+      style={{ padding: '16px 18px', position: 'relative', overflow: 'hidden' }}
+    >
+      {/* Green top stripe for open games */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px',
+          background: 'linear-gradient(90deg, transparent, var(--green), transparent)',
+          borderRadius: '0 0 4px 4px',
+        }} />
+      )}
+
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <span className="badge badge-muted">
           {game.stage}{game.group_name ? ` · ${game.group_name}` : ''}
         </span>
-        <span className="text-xs" style={{ color: '#7A8FA6' }}>{formatDate(game.game_date)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {open && <span className="live-dot" />}
+          <span style={{ fontSize: '.7rem', color: 'var(--muted)' }}>{formatDate(game.game_date)}</span>
+        </div>
       </div>
 
-      {/* Teams + score */}
-      <div className="flex items-center justify-between gap-2 mb-4">
-        {/* Home */}
-        <div className="flex flex-col items-center gap-1 flex-1">
-          {game.home_flag && <img src={game.home_flag} alt={game.home_team} className="w-8 h-8 object-contain" />}
-          <span className="text-xs font-medium text-center" style={{ color: '#F0F4F8' }}>{game.home_team}</span>
+      {/* Match row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+        {/* Home team */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
+          {game.home_flag
+            ? <img src={game.home_flag} alt={game.home_team} style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
+            : <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'var(--s3)' }} />
+          }
+          <span style={{
+            fontSize: '.7rem', fontWeight: 600, color: 'var(--text)',
+            textAlign: 'center', lineHeight: 1.25, maxWidth: '5rem',
+          }}>
+            {game.home_team}
+          </span>
         </div>
 
-        {/* Score / inputs */}
-        <div className="flex items-center gap-2">
+        {/* Center: score / inputs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '96px', justifyContent: 'center' }}>
           {game.is_finished ? (
-            <div className="flex items-center gap-1">
-              <span className="text-2xl font-bold" style={{ color: '#FFD700' }}>{game.home_score}</span>
-              <span style={{ color: '#7A8FA6' }}>×</span>
-              <span className="text-2xl font-bold" style={{ color: '#FFD700' }}>{game.away_score}</span>
-            </div>
+            <>
+              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                {game.home_score}
+              </span>
+              <span style={{ color: 'var(--muted)', fontSize: '.85rem', fontWeight: 300 }}>–</span>
+              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                {game.away_score}
+              </span>
+            </>
           ) : open ? (
-            <div className="flex items-center gap-1">
-              <input type="number" min="0" max="20" value={home} onChange={(e) => setHome(e.target.value)} style={inputStyle} />
-              <span style={{ color: '#7A8FA6' }}>×</span>
-              <input type="number" min="0" max="20" value={away} onChange={(e) => setAway(e.target.value)} style={inputStyle} />
-            </div>
+            <>
+              <input
+                type="number" min="0" max="20"
+                value={home}
+                onChange={(e) => setHome(e.target.value)}
+                className="score-box"
+              />
+              <span style={{ color: 'var(--muted)', fontSize: '.85rem' }}>–</span>
+              <input
+                type="number" min="0" max="20"
+                value={away}
+                onChange={(e) => setAway(e.target.value)}
+                className="score-box"
+              />
+            </>
           ) : (
-            <div className="flex items-center gap-1 text-sm font-bold" style={{ color: '#7A8FA6' }}>
-              {pred ? `${pred.predicted_home} × ${pred.predicted_away}` : '— × —'}
-            </div>
+            <span className="mono" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--muted)' }}>
+              {pred ? `${pred.predicted_home}–${pred.predicted_away}` : '?–?'}
+            </span>
           )}
         </div>
 
-        {/* Away */}
-        <div className="flex flex-col items-center gap-1 flex-1">
-          {game.away_flag && <img src={game.away_flag} alt={game.away_team} className="w-8 h-8 object-contain" />}
-          <span className="text-xs font-medium text-center" style={{ color: '#F0F4F8' }}>{game.away_team}</span>
+        {/* Away team */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '7px' }}>
+          {game.away_flag
+            ? <img src={game.away_flag} alt={game.away_team} style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
+            : <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'var(--s3)' }} />
+          }
+          <span style={{
+            fontSize: '.7rem', fontWeight: 600, color: 'var(--text)',
+            textAlign: 'center', lineHeight: 1.25, maxWidth: '5rem',
+          }}>
+            {game.away_team}
+          </span>
         </div>
       </div>
 
-      {/* Bottom row: palpite info + save button */}
-      <div className="flex items-center justify-between">
-        <div className="text-xs" style={{ color: '#7A8FA6' }}>
+      {/* Footer row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {game.is_finished && pred && (
-            <span
-              className="px-2 py-1 rounded-full font-bold"
-              style={{
-                background: pred.points === 3 ? '#00C853' : pred.points === 1 ? '#FFD700' : '#1E2F45',
-                color: pred.points === 3 ? '#fff' : pred.points === 1 ? '#0D1B2A' : '#7A8FA6',
-              }}
-            >
-              {pred.points === 3 ? '✓ Exato — 3 pts' : pred.points === 1 ? '✓ Resultado — 1 pt' : '✗ 0 pts'}
+            <span className={`badge ${pred.points === 3 ? 'badge-green' : pred.points === 1 ? 'badge-amber' : 'badge-muted'}`}>
+              {pred.points === 3 ? '✓ Exato · 3 pts' : pred.points === 1 ? '✓ Resultado · 1 pt' : '✗ 0 pts'}
             </span>
           )}
           {!game.is_finished && !open && (
-            <span className="px-2 py-1 rounded-full" style={{ background: '#1E2F45', color: '#7A8FA6' }}>
-              🔒 Encerrado
-            </span>
+            <span className="badge badge-muted">🔒 Encerrado</span>
           )}
           {feedback && (
-            <span
-              className="px-2 py-1 rounded-full ml-1"
-              style={{ background: feedback.ok ? '#00C853' : '#F44336', color: '#fff' }}
-            >
+            <span className={`badge ${feedback.ok ? 'badge-green' : 'badge-red'}`}>
               {feedback.msg}
             </span>
           )}
@@ -124,10 +155,10 @@ export function GameCard({ game }: { game: GameWithPrediction }) {
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-bold transition-opacity disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg, #FFD700, #C9A800)', color: '#0D1B2A' }}
+            className="btn btn-green"
+            style={{ padding: '7px 16px', fontSize: '.78rem' }}
           >
-            {loading ? 'Salvando...' : pred ? 'Atualizar' : 'Salvar'}
+            {loading ? '...' : pred ? 'Atualizar' : 'Salvar'}
           </button>
         )}
       </div>

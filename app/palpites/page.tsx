@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCachedGames } from '@/lib/cache'
 import { GameCard } from '@/components/GameCard'
 import type { GameWithPrediction } from '@/lib/types'
 
@@ -8,14 +9,14 @@ export default async function PalpitesPage() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.user) redirect('/login')
 
-  const [{ data: games }, { data: predictions }] = await Promise.all([
-    supabase.from('games').select('*').order('game_date', { ascending: true }),
+  const [games, { data: predictions }] = await Promise.all([
+    getCachedGames(),
     supabase.from('predictions').select('game_id, predicted_home, predicted_away, points').eq('user_id', session.user.id),
   ])
 
   const predMap = new Map(predictions?.map((p) => [p.game_id, p]) ?? [])
 
-  const gamesWithPreds: GameWithPrediction[] = (games ?? []).map((g) => ({
+  const gamesWithPreds: GameWithPrediction[] = games.map((g) => ({
     ...g,
     prediction: predMap.get(g.id),
   }))
@@ -25,32 +26,43 @@ export default async function PalpitesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: '#F0F4F8' }}>Meus Palpites</h1>
+      {/* Header */}
+      <div className="fade-1" style={{ marginBottom: '1.75rem' }}>
+        <h1 className="display" style={{ fontSize: '2.5rem', color: 'var(--text)', marginBottom: '.25rem' }}>
+          Meus Palpites
+        </h1>
+        <p style={{ fontSize: '.85rem', color: 'var(--muted)' }}>
+          Envie seu palpite até 30 min antes do início de cada jogo.
+        </p>
+      </div>
 
-      {!games?.length && (
-        <div className="rounded-2xl p-8 text-center" style={{ background: '#162233', color: '#7A8FA6' }}>
+      {games.length === 0 && (
+        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
           Nenhum jogo cadastrado ainda. Aguarde o admin importar os jogos da Copa 2026.
         </div>
       )}
 
       {upcoming.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: '#7A8FA6' }}>
-            Jogos abertos ({upcoming.length})
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {upcoming.map((g) => <GameCard key={g.id} game={g} />)}
+        <section style={{ marginBottom: '2.5rem' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px',
+          }}>
+            <span className="live-dot" />
+            <span className="section-label">Jogos abertos · {upcoming.length}</span>
+          </div>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            {upcoming.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
           </div>
         </section>
       )}
 
       {finished.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: '#7A8FA6' }}>
-            Jogos encerrados ({finished.length})
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {finished.map((g) => <GameCard key={g.id} game={g} />)}
+          <div style={{ marginBottom: '14px' }}>
+            <span className="section-label">Jogos encerrados · {finished.length}</span>
+          </div>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            {finished.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
           </div>
         </section>
       )}

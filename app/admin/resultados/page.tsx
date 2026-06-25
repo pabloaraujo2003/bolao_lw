@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react'
 import { updateGameResult } from '@/app/actions/admin'
 
-type Game = { id: number; home_team: string; away_team: string; game_date: string; home_score: number | null; away_score: number | null; is_finished: boolean }
+type Game = {
+  id: number
+  home_team: string
+  away_team: string
+  game_date: string
+  home_score: number | null
+  away_score: number | null
+  is_finished: boolean
+}
 
 export default function AdminResultadosPage() {
   const [games, setGames] = useState<Game[]>([])
@@ -19,10 +27,7 @@ export default function AdminResultadosPage() {
         setGames(gs)
         const init: Record<number, { home: string; away: string }> = {}
         gs.forEach((g) => {
-          init[g.id] = {
-            home: g.home_score?.toString() ?? '',
-            away: g.away_score?.toString() ?? '',
-          }
+          init[g.id] = { home: g.home_score?.toString() ?? '', away: g.away_score?.toString() ?? '' }
         })
         setScores(init)
       })
@@ -39,54 +44,65 @@ export default function AdminResultadosPage() {
     const res = await updateGameResult(gameId, h, a)
     setSaving((prev) => ({ ...prev, [gameId]: false }))
     if (res?.error) setFeedback((prev) => ({ ...prev, [gameId]: { ok: false, msg: res.error! } }))
-    else setFeedback((prev) => ({ ...prev, [gameId]: { ok: true, msg: 'Resultado salvo e pontos recalculados!' } }))
+    else setFeedback((prev) => ({ ...prev, [gameId]: { ok: true, msg: 'Salvo! Pontos recalculados.' } }))
   }
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-6" style={{ color: '#F0F4F8' }}>Lançar Resultados</h2>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h2 className="display" style={{ fontSize: '2rem', color: 'var(--text)', marginBottom: '.2rem' }}>Resultados</h2>
+        <p style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Lance o placar final de cada partida</p>
+      </div>
 
       {games.length === 0 && (
-        <div className="text-center py-8 rounded-2xl" style={{ background: '#162233', color: '#7A8FA6' }}>
+        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)', fontSize: '.9rem' }}>
           Nenhum jogo cadastrado.
         </div>
       )}
 
-      <div className="space-y-3">
-        {games.map((game) => (
-          <div key={game.id} className="rounded-2xl p-4" style={{ background: '#162233', border: '1px solid #1E2F45' }}>
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <div className="font-medium" style={{ color: '#F0F4F8' }}>
-                  {game.home_team} × {game.away_team}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {games.map((game, i) => (
+          <div key={game.id} className={`card fade-${Math.min(i + 2, 6)}`} style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              {/* Match info */}
+              <div style={{ flex: 1, minWidth: '160px' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '.92rem', marginBottom: '3px' }}>
+                  {game.home_team} <span style={{ color: 'var(--muted)', margin: '0 4px' }}>×</span> {game.away_team}
                 </div>
-                <div className="text-xs" style={{ color: '#7A8FA6' }}>
-                  {new Date(game.game_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  {game.is_finished && ' · ✓ Encerrado'}
+                <div style={{ fontSize: '.72rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>
+                    {new Date(game.game_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                    {' '}
+                    {new Date(game.game_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {game.is_finished && (
+                    <span className="badge badge-green" style={{ fontSize: '.6rem', padding: '2px 7px' }}>✓ Encerrado</span>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Score inputs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="number" min="0" max="20"
                   value={scores[game.id]?.home ?? ''}
                   onChange={(e) => setScores((prev) => ({ ...prev, [game.id]: { ...prev[game.id], home: e.target.value } }))}
-                  className="w-12 text-center rounded-lg p-2 text-sm font-bold"
-                  style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
+                  className="score-box"
+                  placeholder="—"
                 />
-                <span style={{ color: '#7A8FA6' }}>×</span>
+                <span className="mono" style={{ color: 'var(--muted)', fontWeight: 700 }}>×</span>
                 <input
                   type="number" min="0" max="20"
                   value={scores[game.id]?.away ?? ''}
                   onChange={(e) => setScores((prev) => ({ ...prev, [game.id]: { ...prev[game.id], away: e.target.value } }))}
-                  className="w-12 text-center rounded-lg p-2 text-sm font-bold"
-                  style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
+                  className="score-box"
+                  placeholder="—"
                 />
                 <button
                   onClick={() => handleSave(game.id)}
                   disabled={saving[game.id]}
-                  className="px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60"
-                  style={{ background: 'linear-gradient(135deg, #FFD700, #C9A800)', color: '#0D1B2A' }}
+                  className="btn btn-green"
+                  style={{ padding: '8px 18px', fontSize: '.78rem', minWidth: '72px' }}
                 >
                   {saving[game.id] ? '...' : 'Salvar'}
                 </button>
@@ -94,8 +110,11 @@ export default function AdminResultadosPage() {
             </div>
 
             {feedback[game.id] && (
-              <div className="mt-2 text-xs" style={{ color: feedback[game.id].ok ? '#00C853' : '#F44336' }}>
-                {feedback[game.id].msg}
+              <div style={{
+                marginTop: '10px', fontSize: '.75rem', fontWeight: 500,
+                color: feedback[game.id].ok ? 'var(--green)' : 'var(--red)',
+              }}>
+                {feedback[game.id].ok ? '✓ ' : '✗ '}{feedback[game.id].msg}
               </div>
             )}
           </div>

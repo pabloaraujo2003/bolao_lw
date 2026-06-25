@@ -1,39 +1,36 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/server'
-
-const inter = Inter({ subsets: ['latin'] })
+import { getCachedProfile } from '@/lib/cache'
 
 export const metadata: Metadata = {
   title: 'Bolão da Copa 2026',
   description: 'Faça seus palpites e dispute o prêmio com seus colegas',
 }
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   let profile = null
   if (session?.user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('name, is_admin')
-      .eq('id', session.user.id)
-      .single()
-    profile = data
+    profile = await getCachedProfile(session.user.id)
   }
 
   return (
     <html lang="pt-BR">
-      <body className={inter.className} style={{ background: '#0D1B2A', color: '#F0F4F8', minHeight: '100vh' }}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
         <Navbar user={session?.user ?? null} profile={profile} />
-        <div className="max-w-5xl mx-auto px-4 pb-16">
+        <div className="main-content max-w-5xl mx-auto px-4 pb-20">
           {children}
         </div>
       </body>

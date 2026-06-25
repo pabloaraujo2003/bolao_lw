@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { register } from '@/app/actions/auth'
 
 export default function CadastroPage() {
+  const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -22,90 +24,83 @@ export default function CadastroPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+    } else if (result?.redirectTo) {
+      router.push(result.redirectTo)
+      router.refresh()
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0D1B2A' }}>
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-4xl mb-2">⚽</div>
-          <h1 className="text-2xl font-bold" style={{ color: '#FFD700' }}>Bolão da Copa 2026</h1>
-          <p className="text-sm mt-1" style={{ color: '#7A8FA6' }}>Crie sua conta e entre na disputa</p>
+    <main style={{
+      minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem',
+    }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="display" style={{ fontSize: '3rem', color: 'var(--green)', lineHeight: 1, marginBottom: '.25rem' }}>
+            BOLÃO
+          </div>
+          <div className="display" style={{ fontSize: '1.25rem', color: 'var(--muted)', letterSpacing: '.1em' }}>
+            COPA 2026
+          </div>
         </div>
 
-        <div className="rounded-2xl p-8" style={{ background: '#162233' }}>
-          <h2 className="text-lg font-semibold mb-6" style={{ color: '#F0F4F8' }}>Criar conta</h2>
+        <div className="auth-card">
+          <h1 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text)', marginBottom: '1.5rem' }}>
+            Criar conta
+          </h1>
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#1E2F45', color: '#F44336', border: '1px solid #F44336' }}>
+            <div style={{
+              background: 'var(--red-dim)', border: '1px solid rgba(255,77,77,.3)',
+              borderRadius: '10px', padding: '10px 14px',
+              fontSize: '.82rem', color: 'var(--red)', marginBottom: '1rem',
+            }}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>Nome</label>
-              <input
-                name="name"
-                type="text"
-                required
-                placeholder="Seu nome"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                NOME
+              </label>
+              <input name="name" type="text" required placeholder="Seu nome" className="field" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>E-mail</label>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                E-MAIL
+              </label>
+              <input name="email" type="email" required placeholder="seu@email.com" className="field" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>Senha</label>
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                SENHA
+              </label>
+              <input name="password" type="password" required minLength={6} placeholder="Mínimo 6 caracteres" className="field" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: '#7A8FA6' }}>Confirmar senha</label>
-              <input
-                name="confirm"
-                type="password"
-                required
-                placeholder="Repita a senha"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: '#1E2F45', color: '#F0F4F8', border: '1px solid #1E2F45' }}
-              />
+              <label style={{ display: 'block', fontSize: '.75rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 500, letterSpacing: '.04em' }}>
+                CONFIRMAR SENHA
+              </label>
+              <input name="confirm" type="password" required placeholder="Repita a senha" className="field" />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg, #FFD700, #C9A800)', color: '#0D1B2A' }}
+              className="btn btn-green"
+              style={{ padding: '13px', fontSize: '.9rem', marginTop: '4px', width: '100%' }}
             >
               {loading ? 'Criando conta...' : 'Criar conta'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm" style={{ color: '#7A8FA6' }}>
+          <p style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '.82rem', color: 'var(--muted)' }}>
             Já tem conta?{' '}
-            <Link href="/login" className="font-medium hover:underline" style={{ color: '#FFD700' }}>
+            <Link href="/login" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
               Entrar
             </Link>
           </p>

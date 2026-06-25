@@ -18,45 +18,69 @@ export default async function AdminParticipantesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h2 className="text-lg font-bold" style={{ color: '#F0F4F8' }}>
-          Participantes ({profiles?.length ?? 0})
-        </h2>
-        <div className="text-sm" style={{ color: '#7A8FA6' }}>
-          {totalPaid} pagos · R$ {totalPool.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} arrecadados
+      {/* Header */}
+      <div className="fade-1" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '1.5rem' }}>
+        <div>
+          <h2 className="display" style={{ fontSize: '2rem', color: 'var(--text)', marginBottom: '.2rem' }}>Participantes</h2>
+          <p style={{ fontSize: '.82rem', color: 'var(--muted)' }}>
+            {profiles?.length ?? 0} cadastrados
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="card" style={{ padding: '10px 16px', textAlign: 'center', minWidth: '100px' }}>
+            <div className="mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--green)', marginBottom: '2px' }}>
+              {totalPaid}
+            </div>
+            <div style={{ fontSize: '.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Pagos</div>
+          </div>
+          <div className="card" style={{ padding: '10px 16px', textAlign: 'center', minWidth: '120px' }}>
+            <div className="mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--amber)', marginBottom: '2px' }}>
+              R$ {totalPool.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: '.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Arrecadado</div>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#162233', border: '1px solid #1E2F45' }}>
-        <table className="w-full text-sm">
-          <thead>
-            <tr style={{ background: '#1E2F45', color: '#7A8FA6' }}>
-              <th className="px-4 py-3 text-left font-medium">Nome</th>
-              <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">Cadastro</th>
-              <th className="px-4 py-3 text-center font-medium">Pagamento</th>
-            </tr>
-          </thead>
-          <tbody>
-            {profiles?.map((p) => (
-              <tr key={p.id} style={{ borderTop: '1px solid #1E2F45' }}>
-                <td className="px-4 py-3 font-medium" style={{ color: '#F0F4F8' }}>{p.name}</td>
-                <td className="px-4 py-3 text-xs hidden sm:table-cell" style={{ color: '#7A8FA6' }}>
-                  {new Date(p.created_at).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <PaymentToggle userId={p.id} paid={p.paid} />
-                </td>
-              </tr>
-            ))}
-            {!profiles?.length && (
-              <tr>
-                <td colSpan={3} className="px-4 py-8 text-center" style={{ color: '#7A8FA6' }}>
-                  Nenhum participante cadastrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Table */}
+      <div className="fade-2 card" style={{ padding: 0, overflow: 'hidden' }}>
+        {/* Header row */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr auto auto',
+          padding: '10px 20px', borderBottom: '1px solid var(--border)',
+          fontSize: '.68rem', color: 'var(--muted)', letterSpacing: '.07em', textTransform: 'uppercase', fontWeight: 600,
+          background: 'var(--s2)',
+        }}>
+          <span>Nome</span>
+          <span style={{ textAlign: 'right', marginRight: '60px' }}>Cadastro</span>
+          <span style={{ textAlign: 'center', minWidth: '100px' }}>Pagamento</span>
+        </div>
+
+        {profiles?.length ? profiles.map((p, i) => (
+          <div
+            key={p.id}
+            style={{
+              display: 'grid', gridTemplateColumns: '1fr auto auto',
+              alignItems: 'center', padding: '13px 20px',
+              borderBottom: i < profiles.length - 1 ? '1px solid var(--border)' : 'none',
+              transition: 'background .1s',
+            }}
+          >
+            <div style={{ fontWeight: 500, color: 'var(--text)', fontSize: '.88rem' }}>
+              {p.name}
+            </div>
+            <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginRight: '20px' }}>
+              {new Date(p.created_at).toLocaleDateString('pt-BR')}
+            </div>
+            <div style={{ minWidth: '100px', display: 'flex', justifyContent: 'center' }}>
+              <PaymentToggle userId={p.id} paid={p.paid} />
+            </div>
+          </div>
+        )) : (
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)', fontSize: '.9rem' }}>
+            Nenhum participante cadastrado.
+          </div>
+        )}
       </div>
     </div>
   )

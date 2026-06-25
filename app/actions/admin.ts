@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { calcPoints } from '@/lib/scoring'
+import { invalidate } from '@/lib/cache'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -41,6 +42,7 @@ export async function updateGameResult(gameId: number, homeScore: number, awaySc
     }
   }
 
+  await invalidate('games', 'ranking')
   revalidatePath('/admin/resultados')
   revalidatePath('/ranking')
   revalidatePath('/')
@@ -52,6 +54,7 @@ export async function togglePayment(userId: string, paid: boolean) {
   const admin = createAdminClient()
   const { error } = await admin.from('profiles').update({ paid }).eq('id', userId)
   if (error) return { error: error.message }
+  await invalidate('total-paid', `profile:${userId}`)
   revalidatePath('/admin/participantes')
   revalidatePath('/premiacao')
   revalidatePath('/')
@@ -72,6 +75,7 @@ export async function updateSettings(formData: FormData): Promise<{ success?: bo
       await admin.from('settings').upsert({ key, value })
     }
   }
+  await invalidate('settings')
   revalidatePath('/admin/configuracoes')
   revalidatePath('/')
   revalidatePath('/premiacao')

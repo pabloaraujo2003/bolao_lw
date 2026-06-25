@@ -25,23 +25,86 @@ export default async function AdminPage() {
   const entryFee = parseFloat(s.entry_fee ?? '50')
   const totalPool = (totalPaid ?? 0) * entryFee
 
+  const syncOk = lastSync?.status === 'ok'
+
   const stats = [
-    { label: 'Participantes', value: totalParticipants ?? 0, sub: `${totalPaid ?? 0} pagos` },
-    { label: 'Total arrecadado', value: `R$ ${totalPool.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: `Cota: R$ ${entryFee.toFixed(2).replace('.', ',')}` },
-    { label: 'Jogos', value: totalGames ?? 0, sub: `${finishedGames ?? 0} encerrados` },
-    { label: 'Último sync', value: lastSync ? new Date(lastSync.synced_at).toLocaleString('pt-BR') : '—', sub: lastSync?.status ?? '—' },
+    {
+      label: 'Participantes',
+      value: totalParticipants ?? 0,
+      sub: `${totalPaid ?? 0} confirmados`,
+      color: 'var(--green)',
+      icon: '👥',
+    },
+    {
+      label: 'Arrecadado',
+      value: `R$ ${totalPool.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: `Cota: R$ ${entryFee.toFixed(2).replace('.', ',')}`,
+      color: 'var(--amber)',
+      icon: '💰',
+    },
+    {
+      label: 'Jogos',
+      value: totalGames ?? 0,
+      sub: `${finishedGames ?? 0} encerrados`,
+      color: 'var(--green)',
+      icon: '⚽',
+    },
+    {
+      label: 'Último sync',
+      value: lastSync ? new Date(lastSync.synced_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—',
+      sub: lastSync ? new Date(lastSync.synced_at).toLocaleDateString('pt-BR') : 'Nunca',
+      color: syncOk ? 'var(--green)' : 'var(--amber)',
+      icon: '🔄',
+    },
   ]
 
   return (
     <div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl p-5" style={{ background: '#162233', border: '1px solid #1E2F45' }}>
-            <div className="text-xs mb-1" style={{ color: '#7A8FA6' }}>{stat.label}</div>
-            <div className="text-2xl font-bold mb-1" style={{ color: '#FFD700' }}>{stat.value}</div>
-            <div className="text-xs" style={{ color: '#7A8FA6' }}>{stat.sub}</div>
+      <div className="fade-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '2rem' }}>
+        {stats.map((stat, i) => (
+          <div key={stat.label} className={`card fade-${i + 2}`} style={{ padding: '20px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ fontSize: '.7rem', color: 'var(--muted)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                {stat.label}
+              </div>
+              <span style={{ fontSize: '1.1rem', opacity: .7 }}>{stat.icon}</span>
+            </div>
+            <div className="mono" style={{ fontSize: '1.6rem', fontWeight: 700, color: stat.color, marginBottom: '4px', lineHeight: 1 }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>{stat.sub}</div>
           </div>
         ))}
+      </div>
+
+      {/* Quick links */}
+      <div className="fade-3 card" style={{ padding: '20px' }}>
+        <div style={{ fontSize: '.7rem', color: 'var(--muted)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '14px' }}>
+          Ações rápidas
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
+          {[
+            { href: '/admin/resultados', label: '⚽ Lançar resultados' },
+            { href: '/admin/participantes', label: '👥 Ver participantes' },
+            { href: '/admin/configuracoes', label: '⚙️ Configurações' },
+            { href: '/admin/jogos', label: '📋 Gerenciar jogos' },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              style={{
+                display: 'block', padding: '12px 14px',
+                background: 'var(--s2)', borderRadius: '10px',
+                border: '1px solid var(--border)',
+                fontSize: '.82rem', color: 'var(--text)',
+                textDecoration: 'none', fontWeight: 500,
+                transition: 'border-color .15s, color .15s',
+              }}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   )

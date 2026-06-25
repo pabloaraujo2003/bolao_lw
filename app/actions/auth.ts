@@ -13,25 +13,33 @@ export async function login(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  redirect('/')
+  return { success: true, redirectTo: '/' }
 }
 
 export async function register(formData: FormData) {
-  const supabase = await createClient()
-
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signUp({
+  // Use admin client to create user with email pre-confirmed (no confirmation email sent)
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const admin = createAdminClient()
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
-    options: { data: { name } },
+    email_confirm: true,
+    user_metadata: { name },
   })
 
-  if (error) return { error: error.message }
+  if (createError) return { error: createError.message }
 
-  redirect('/palpites')
+  // Sign in immediately after creation
+  const supabase = await createClient()
+  const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (loginError) return { error: loginError.message }
+
+  return { success: true, redirectTo: '/palpites' }
 }
 
 export async function logout() {

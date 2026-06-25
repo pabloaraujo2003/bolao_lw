@@ -10,83 +10,123 @@ type Props = {
   profile: { name: string; is_admin: boolean } | null
 }
 
+const links = [
+  { href: '/',          label: 'Início',    icon: '🏠' },
+  { href: '/palpites',  label: 'Palpites',  icon: '⚽' },
+  { href: '/ranking',   label: 'Ranking',   icon: '🏆' },
+  { href: '/premiacao', label: 'Premiação', icon: '💰' },
+]
+
 export function Navbar({ user, profile }: Props) {
   const pathname = usePathname()
 
-  const links = [
-    { href: '/', label: 'Início' },
-    { href: '/palpites', label: 'Palpites' },
-    { href: '/ranking', label: 'Ranking' },
-    { href: '/premiacao', label: 'Premiação' },
-  ]
-
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
 
   return (
-    <header style={{ background: '#162233', borderBottom: '1px solid #1E2F45' }} className="sticky top-0 z-50 mb-6">
-      <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link href="/" className="flex items-center gap-2 font-bold text-base" style={{ color: '#FFD700' }}>
-          <span>⚽</span>
-          <span className="hidden sm:inline">Bolão 2026</span>
-        </Link>
+    <>
+      {/* ── Top bar ───────────────────────────────────────── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: 'rgba(4, 8, 13, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--border)',
+        marginBottom: '2rem',
+      }}>
+        <div style={{
+          maxWidth: '80rem', margin: '0 auto', padding: '0 1rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: '3.5rem',
+        }}>
+          {/* Logo */}
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}>
+            <span className="display" style={{ fontSize: '1.4rem', color: 'var(--green)' }}>BOLÃO</span>
+            <span className="display" style={{ fontSize: '1.4rem', color: 'rgba(232,240,248,.75)' }}>&nbsp;26</span>
+          </Link>
 
-        <nav className="flex items-center gap-1">
-          {links.map((link) => (
+          {/* Desktop nav links */}
+          <nav className="top-nav-links">
+            {links.map((link) => {
+              const active = isActive(link.href)
+              return (
+                <Link key={link.href} href={link.href} style={{
+                  padding: '6px 12px', borderRadius: '8px',
+                  fontSize: '.82rem',
+                  fontWeight: active ? 600 : 400,
+                  color: active ? 'var(--green)' : 'var(--muted)',
+                  background: active ? 'var(--green-dim)' : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'color .15s, background .15s',
+                }}>
+                  {link.label}
+                </Link>
+              )
+            })}
+            {profile?.is_admin && (
+              <Link href="/admin" style={{
+                padding: '6px 12px', borderRadius: '8px', marginLeft: '4px',
+                fontSize: '.82rem',
+                fontWeight: pathname.startsWith('/admin') ? 600 : 400,
+                color: pathname.startsWith('/admin') ? 'var(--amber)' : 'var(--muted)',
+                background: pathname.startsWith('/admin') ? 'var(--amber-dim)' : 'transparent',
+                textDecoration: 'none',
+                transition: 'color .15s, background .15s',
+              }}>
+                Admin
+              </Link>
+            )}
+          </nav>
+
+          {/* User area */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {user ? (
+              <>
+                <span className="top-user-name" style={{
+                  fontSize: '.75rem', color: 'var(--muted)',
+                  maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {profile?.name ?? user.email}
+                </span>
+                <form action={logout}>
+                  <button type="submit" className="btn btn-ghost" style={{ padding: '6px 13px', fontSize: '.78rem' }}>
+                    Sair
+                  </button>
+                </form>
+              </>
+            ) : (
+              <Link href="/login" className="btn btn-green" style={{ padding: '7px 16px', fontSize: '.82rem' }}>
+                Entrar
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ── Bottom tab bar (mobile only) ──────────────────── */}
+      <nav className="bottom-nav">
+        {links.map((link) => {
+          const active = isActive(link.href)
+          return (
             <Link
               key={link.href}
               href={link.href}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                color: isActive(link.href) ? '#FFD700' : '#7A8FA6',
-                background: isActive(link.href) ? '#1E2F45' : 'transparent',
-              }}
+              className={`bottom-nav-item${active ? ' active-main' : ''}`}
             >
-              {link.label}
+              <span className="bottom-nav-icon">{link.icon}</span>
+              <span>{link.label}</span>
             </Link>
-          ))}
-
-          {profile?.is_admin && (
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ml-1"
-              style={{
-                color: pathname.startsWith('/admin') ? '#FFD700' : '#7A8FA6',
-                background: pathname.startsWith('/admin') ? '#1E2F45' : 'transparent',
-              }}
-            >
-              Admin
-            </Link>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          {user ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs hidden sm:inline" style={{ color: '#7A8FA6' }}>
-                {profile?.name ?? user.email}
-              </span>
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: '#1E2F45', color: '#7A8FA6' }}
-                >
-                  Sair
-                </button>
-              </form>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="px-4 py-1.5 rounded-lg text-sm font-semibold"
-              style={{ background: 'linear-gradient(135deg, #FFD700, #C9A800)', color: '#0D1B2A' }}
-            >
-              Entrar
-            </Link>
-          )}
-        </div>
-      </div>
-    </header>
+          )
+        })}
+        {profile?.is_admin && (
+          <Link
+            href="/admin"
+            className={`bottom-nav-item${pathname.startsWith('/admin') ? ' active-admin' : ''}`}
+          >
+            <span className="bottom-nav-icon">⚙️</span>
+            <span>Admin</span>
+          </Link>
+        )}
+      </nav>
+    </>
   )
 }
