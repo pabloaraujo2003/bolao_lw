@@ -13,6 +13,49 @@ export async function fetchAllFixtures() {
   return apiFetch('/competitions/WC/matches')
 }
 
+export async function fetchMatchDetail(fixtureId: number) {
+  return apiFetch(`/matches/${fixtureId}`)
+}
+
+export type MetricAnswers = Record<string, string>
+
+export function deriveAnswersFromMatch(match: any): MetricAnswers {
+  const goals: any[] = match.goals ?? []
+  const fullTime = match.score?.fullTime ?? {}
+  const halfTime = match.score?.halfTime ?? {}
+  const firstGoal = goals[0]
+
+  const scorerMap: Record<string, number> = {}
+  goals.forEach((g) => {
+    const name = g.scorer?.name ?? ''
+    if (name) scorerMap[name] = (scorerMap[name] ?? 0) + 1
+  })
+  const topScorer = Object.entries(scorerMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+
+  const firstHalfGoal = goals.find((g) => g.minute <= 45 && !g.extraTime)
+
+  const minuteRanges = ['1-15', '16-30', '31-45', '46-60', '61-75', '76-90', '90+']
+  function minuteRange(m: number) {
+    if (m <= 15) return '1-15'
+    if (m <= 30) return '16-30'
+    if (m <= 45) return '31-45'
+    if (m <= 60) return '46-60'
+    if (m <= 75) return '61-75'
+    if (m <= 90) return '76-90'
+    return '90+'
+  }
+
+  return {
+    score: fullTime.home != null ? `${fullTime.home}-${fullTime.away}` : '',
+    half_score: halfTime.home != null ? `${halfTime.home}-${halfTime.away}` : '',
+    total_goals: String(goals.length),
+    first_scorer: firstGoal?.scorer?.name ?? '',
+    goal_first_half: firstHalfGoal ? 'Sim' : 'Não',
+    first_goal_minute: firstGoal ? minuteRange(firstGoal.minute) : '',
+    top_scorer: topScorer,
+  }
+}
+
 export async function fetchFinishedFixturesSince(_since: string) {
   // football-data.org retorna todos os jogos; filtramos os FINISHED no caller
   return apiFetch('/competitions/WC/matches')

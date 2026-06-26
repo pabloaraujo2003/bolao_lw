@@ -14,6 +14,7 @@ const links = [
   { href: '/',          label: 'Início',    icon: '🏠' },
   { href: '/palpites',  label: 'Palpites',  icon: '⚽' },
   { href: '/ranking',   label: 'Ranking',   icon: '🏆' },
+  { href: '/boloes',    label: 'Mini-Bolões', icon: '🎯' },
   { href: '/premiacao', label: 'Premiação', icon: '💰' },
 ]
 

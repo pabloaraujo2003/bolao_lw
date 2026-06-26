@@ -40,6 +40,43 @@ export type RankingRow = {
   predictions_count: number
 }
 
+export type SpecialPool = {
+  id: string
+  game_id: number | null
+  name: string
+  entry_fee: number
+  is_open: boolean
+  created_at: string
+  game?: Game
+}
+
+export type SpecialQuestion = {
+  id: string
+  pool_id: string
+  question: string
+  options: string[]
+  metric_type: string | null
+  correct_answer: string | null
+  points: number
+  order_index: number
+}
+
+export type SpecialAnswer = {
+  id: string
+  user_id: string
+  question_id: string
+  answer: string
+  points: number
+  created_at: string
+}
+
+export type SpecialParticipant = {
+  user_id: string
+  pool_id: string
+  paid: boolean
+  joined_at: string
+}
+
 export type Settings = Record<string, string>
 
 export type SyncLog = {
