@@ -4,6 +4,35 @@ import { getCachedGames } from '@/lib/cache'
 import { GameCard } from '@/components/GameCard'
 import type { GameWithPrediction } from '@/lib/types'
 
+const KNOCKOUT_STAGES = ['Round of 32', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Third Place', 'Final']
+
+function isKnockout(stage: string) {
+  return KNOCKOUT_STAGES.includes(stage)
+}
+
+function GameSection({
+  label,
+  games,
+  dot,
+}: {
+  label: string
+  games: GameWithPrediction[]
+  dot?: boolean
+}) {
+  if (games.length === 0) return null
+  return (
+    <div style={{ marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        {dot && <span className="live-dot" />}
+        <span className="section-label">{label} · {games.length}</span>
+      </div>
+      <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+        {games.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
+      </div>
+    </div>
+  )
+}
+
 export default async function PalpitesPage() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -24,6 +53,15 @@ export default async function PalpitesPage() {
   const upcoming = gamesWithPreds.filter((g) => !g.is_finished)
   const finished = gamesWithPreds.filter((g) => g.is_finished).reverse()
 
+  const upcomingKnockout = upcoming.filter((g) => isKnockout(g.stage))
+  const upcomingGroup = upcoming.filter((g) => !isKnockout(g.stage))
+
+  const finishedKnockout = finished.filter((g) => isKnockout(g.stage))
+  const finishedGroup = finished.filter((g) => !isKnockout(g.stage))
+
+  const hasUpcoming = upcoming.length > 0
+  const hasFinished = finished.length > 0
+
   return (
     <div>
       {/* Header */}
@@ -42,28 +80,82 @@ export default async function PalpitesPage() {
         </div>
       )}
 
-      {upcoming.length > 0 && (
+      {/* Jogos abertos */}
+      {hasUpcoming && (
         <section style={{ marginBottom: '2.5rem' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <span className="live-dot" />
             <span className="section-label">Jogos abertos · {upcoming.length}</span>
           </div>
-          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {upcoming.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
-          </div>
+
+          {upcomingKnockout.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{
+                fontSize: '.65rem', fontWeight: 700, letterSpacing: '.1em',
+                textTransform: 'uppercase', color: 'var(--amber)', marginBottom: '8px',
+              }}>
+                Mata-Mata
+              </div>
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {upcomingKnockout.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
+              </div>
+            </div>
+          )}
+
+          {upcomingGroup.length > 0 && (
+            <div>
+              {upcomingKnockout.length > 0 && (
+                <div style={{
+                  fontSize: '.65rem', fontWeight: 700, letterSpacing: '.1em',
+                  textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px',
+                }}>
+                  Fase de Grupos
+                </div>
+              )}
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {upcomingGroup.map((g, i) => <GameCard key={g.id} game={g} index={i + upcomingKnockout.length} />)}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
-      {finished.length > 0 && (
+      {/* Jogos encerrados */}
+      {hasFinished && (
         <section>
-          <div style={{ marginBottom: '14px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <span className="section-label">Jogos encerrados · {finished.length}</span>
           </div>
-          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {finished.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
-          </div>
+
+          {finishedKnockout.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{
+                fontSize: '.65rem', fontWeight: 700, letterSpacing: '.1em',
+                textTransform: 'uppercase', color: 'var(--amber)', marginBottom: '8px',
+              }}>
+                Mata-Mata
+              </div>
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {finishedKnockout.map((g, i) => <GameCard key={g.id} game={g} index={i} />)}
+              </div>
+            </div>
+          )}
+
+          {finishedGroup.length > 0 && (
+            <div>
+              {finishedKnockout.length > 0 && (
+                <div style={{
+                  fontSize: '.65rem', fontWeight: 700, letterSpacing: '.1em',
+                  textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px',
+                }}>
+                  Fase de Grupos
+                </div>
+              )}
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {finishedGroup.map((g, i) => <GameCard key={g.id} game={g} index={i + finishedKnockout.length} />)}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>
