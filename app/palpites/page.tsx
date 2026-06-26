@@ -22,7 +22,7 @@ export default async function PalpitesPage() {
   }))
 
   const upcoming = gamesWithPreds.filter((g) => !g.is_finished)
-  const finished = gamesWithPreds.filter((g) => g.is_finished)
+  const finished = gamesWithPreds.filter((g) => g.is_finished).reverse()
 
   return (
     <div>

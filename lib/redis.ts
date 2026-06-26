@@ -8,6 +8,9 @@ export const redis =
     maxRetriesPerRequest: 2,
     connectTimeout: 5000,
     lazyConnect: false,
+    enableOfflineQueue: false,
   })
+
+redis.on('error', () => {})
 
 if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis

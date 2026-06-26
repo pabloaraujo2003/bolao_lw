@@ -137,8 +137,8 @@ export function GameCard({ game, index = 0 }: { game: GameWithPrediction; index?
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {game.is_finished && pred && (
-            <span className={`badge ${pred.points === 3 ? 'badge-green' : pred.points === 1 ? 'badge-amber' : 'badge-muted'}`}>
-              {pred.points === 3 ? '✓ Exato · 3 pts' : pred.points === 1 ? '✓ Resultado · 1 pt' : '✗ 0 pts'}
+            <span className={`badge ${pred.points === 5 ? 'badge-green' : pred.points >= 1 ? 'badge-amber' : 'badge-muted'}`}>
+              {pred.points === 5 ? '✓ Exato · 5 pts' : pred.points === 3 ? '✓ Empate · 3 pts' : pred.points === 1 ? '✓ Vitória · 1 pt' : '✗ 0 pts'}
             </span>
           )}
           {!game.is_finished && !open && (
