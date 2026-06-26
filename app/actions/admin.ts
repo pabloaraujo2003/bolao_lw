@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchFinishedFixturesSince, mapFixtureToGame } from '@/lib/api-football'
 import { calcPoints } from '@/lib/scoring'
 import { invalidate } from '@/lib/cache'
 
@@ -43,6 +44,7 @@ export async function updateGameResult(gameId: number, homeScore: number, awaySc
   }
 
   await invalidate('games', 'ranking')
+  revalidatePath('/palpites')
   revalidatePath('/admin/resultados')
   revalidatePath('/ranking')
   revalidatePath('/')
@@ -59,6 +61,63 @@ export async function togglePayment(userId: string, paid: boolean) {
   revalidatePath('/premiacao')
   revalidatePath('/')
   return { success: true }
+}
+
+export async function forceSyncResults(): Promise<{ success?: boolean; gamesUpdated?: number; error?: string }> {
+  try {
+    await assertAdmin()
+  } catch (e: any) {
+    return { error: e.message }
+  }
+  const admin = createAdminClient()
+
+  try {
+    const data = await fetchFinishedFixturesSince('')
+    const allMatches = data?.matches ?? data?.response ?? []
+    const fixtures = allMatches.filter(
+      (m: any) => m.status === 'FINISHED' && m.homeTeam?.name && m.awayTeam?.name
+    )
+
+    let gamesUpdated = 0
+
+    for (const fixture of fixtures) {
+      const game = mapFixtureToGame(fixture)
+      if (game.home_score === null || game.away_score === null) continue
+
+      const { error: gameErr } = await admin.from('games').upsert(game, { onConflict: 'api_fixture_id' })
+      if (gameErr) continue
+
+      const { data: predictions } = await admin
+        .from('predictions')
+        .select('id, predicted_home, predicted_away')
+        .eq('game_id', game.id)
+
+      if (predictions?.length) {
+        for (const p of predictions) {
+          const points = calcPoints(p.predicted_home, p.predicted_away, game.home_score, game.away_score)
+          await admin.from('predictions').update({ points }).eq('id', p.id)
+        }
+      }
+
+      gamesUpdated++
+    }
+
+    await admin.from('sync_log').insert({ games_updated: gamesUpdated, status: 'success' })
+
+    if (gamesUpdated > 0) {
+      await invalidate('games', 'ranking')
+    }
+
+    revalidatePath('/palpites')
+    revalidatePath('/ranking')
+    revalidatePath('/admin/resultados')
+    revalidatePath('/')
+
+    return { success: true, gamesUpdated }
+  } catch (err: any) {
+    await admin.from('sync_log').insert({ games_updated: 0, status: 'error', error_msg: err.message })
+    return { error: err.message }
+  }
 }
 
 export async function updateSettings(formData: FormData): Promise<{ success?: boolean; error?: string }> {

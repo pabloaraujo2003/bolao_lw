@@ -25,7 +25,7 @@ export default async function AdminPage() {
   const entryFee = parseFloat(s.entry_fee ?? '50')
   const totalPool = (totalPaid ?? 0) * entryFee
 
-  const syncOk = lastSync?.status === 'ok'
+  const syncOk = lastSync?.status === 'success'
 
   const stats = [
     {

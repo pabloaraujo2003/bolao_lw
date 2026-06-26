@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchFinishedFixturesSince, mapFixtureToGame } from '@/lib/api-football'
 import { calcPoints } from '@/lib/scoring'
@@ -60,6 +61,9 @@ export async function GET(request: NextRequest) {
 
     if (gamesUpdated > 0) {
       await invalidate('games', 'ranking')
+      revalidatePath('/palpites')
+      revalidatePath('/ranking')
+      revalidatePath('/')
     }
 
     return NextResponse.json({ ok: true, gamesUpdated })

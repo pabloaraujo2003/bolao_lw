@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { updateGameResult } from '@/app/actions/admin'
+import { updateGameResult, forceSyncResults } from '@/app/actions/admin'
 
 type Game = {
   id: number
@@ -18,6 +18,8 @@ export default function AdminResultadosPage() {
   const [scores, setScores] = useState<Record<number, { home: string; away: string }>>({})
   const [feedback, setFeedback] = useState<Record<number, { ok: boolean; msg: string }>>({})
   const [saving, setSaving] = useState<Record<number, boolean>>({})
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<{ ok: boolean; msg: string } | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/games')
@@ -32,6 +34,28 @@ export default function AdminResultadosPage() {
         setScores(init)
       })
   }, [])
+
+  async function handleSync() {
+    setSyncing(true)
+    setSyncMsg(null)
+    const res = await forceSyncResults()
+    setSyncing(false)
+    if (res?.error) {
+      setSyncMsg({ ok: false, msg: res.error })
+    } else {
+      setSyncMsg({ ok: true, msg: `Sync concluído — ${res.gamesUpdated} jogo(s) atualizado(s)` })
+      // Recarrega a lista de jogos
+      fetch('/api/admin/games')
+        .then((r) => r.json())
+        .then((json) => {
+          const gs: Game[] = json.games ?? []
+          setGames(gs)
+          const init: Record<number, { home: string; away: string }> = {}
+          gs.forEach((g) => { init[g.id] = { home: g.home_score?.toString() ?? '', away: g.away_score?.toString() ?? '' } })
+          setScores(init)
+        })
+    }
+  }
 
   async function handleSave(gameId: number) {
     const h = parseInt(scores[gameId]?.home ?? '')
@@ -49,9 +73,26 @@ export default function AdminResultadosPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h2 className="display" style={{ fontSize: '2rem', color: 'var(--text)', marginBottom: '.2rem' }}>Resultados</h2>
-        <p style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Lance o placar final de cada partida</p>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div>
+          <h2 className="display" style={{ fontSize: '2rem', color: 'var(--text)', marginBottom: '.2rem' }}>Resultados</h2>
+          <p style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Lance o placar final de cada partida</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="btn"
+            style={{ padding: '9px 18px', fontSize: '.8rem', background: 'var(--s2)', color: 'var(--text)', border: '1px solid var(--border)' }}
+          >
+            {syncing ? 'Sincronizando...' : '↻ Sincronizar da API'}
+          </button>
+          {syncMsg && (
+            <span style={{ fontSize: '.75rem', fontWeight: 500, color: syncMsg.ok ? 'var(--green)' : 'var(--red)' }}>
+              {syncMsg.ok ? '✓ ' : '✗ '}{syncMsg.msg}
+            </span>
+          )}
+        </div>
       </div>
 
       {games.length === 0 && (
