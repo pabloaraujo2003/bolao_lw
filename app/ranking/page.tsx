@@ -28,7 +28,7 @@ export default async function RankingPage() {
           Ranking
         </h1>
         <p style={{ fontSize: '.85rem', color: 'var(--muted)' }}>
-          3 pts placar exato · 1 pt acertar o resultado · Desempate por acertos exatos
+          5 pts placar exato · 3 pts empate certo · 1 pt vitória certa · Desempate por acertos exatos
         </p>
       </div>
 
