@@ -86,24 +86,15 @@ export function GameCard({ game, index = 0 }: { game: GameWithPrediction; index?
         {/* Center: score / inputs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '96px', justifyContent: 'center' }}>
           {game.is_finished ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
-                  {game.home_score}
-                </span>
-                <span style={{ color: 'var(--muted)', fontSize: '.85rem', fontWeight: 300 }}>–</span>
-                <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
-                  {game.away_score}
-                </span>
-              </div>
-              {pred ? (
-                <span className="mono" style={{ fontSize: '.72rem', color: 'var(--muted)' }}>
-                  {pred.predicted_home}–{pred.predicted_away}
-                </span>
-              ) : (
-                <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>sem palpite</span>
-              )}
-            </div>
+            <>
+              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                {game.home_score}
+              </span>
+              <span style={{ color: 'var(--muted)', fontSize: '.85rem', fontWeight: 300 }}>–</span>
+              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                {game.away_score}
+              </span>
+            </>
           ) : open ? (
             <>
               <input
@@ -143,34 +134,50 @@ export function GameCard({ game, index = 0 }: { game: GameWithPrediction; index?
       </div>
 
       {/* Footer row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          {game.is_finished && pred && (
+      {game.is_finished ? (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingTop: '10px', borderTop: '1px solid var(--border)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '.68rem', color: 'var(--muted)' }}>Palpite</span>
+            <span className="mono" style={{ fontSize: '.85rem', fontWeight: 700, color: 'var(--muted)' }}>
+              {pred ? `${pred.predicted_home}–${pred.predicted_away}` : '—'}
+            </span>
+          </div>
+          {pred && (
             <span className={`badge ${pred.points === 5 ? 'badge-green' : pred.points >= 1 ? 'badge-amber' : 'badge-muted'}`}>
-              {pred.points === 5 ? '✓ Exato · 5 pts' : pred.points === 3 ? '✓ Empate · 3 pts' : pred.points === 1 ? '✓ Vitória · 1 pt' : '✗ 0 pts'}
+              {pred.points === 5 ? '✓ Exato · 5pts' : pred.points === 3 ? '✓ Empate · 3pts' : pred.points === 1 ? '✓ Vitória · 1pt' : '✗ 0pts'}
             </span>
           )}
-          {!game.is_finished && !open && (
-            <span className="badge badge-muted">🔒 Encerrado</span>
-          )}
-          {feedback && (
-            <span className={`badge ${feedback.ok ? 'badge-green' : 'badge-red'}`}>
-              {feedback.msg}
-            </span>
+          {!pred && (
+            <span className="badge badge-muted">sem palpite</span>
           )}
         </div>
-
-        {open && (
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="btn btn-green"
-            style={{ padding: '7px 16px', fontSize: '.78rem' }}
-          >
-            {loading ? '...' : pred ? 'Atualizar' : 'Salvar'}
-          </button>
-        )}
-      </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            {!open && (
+              <span className="badge badge-muted">🔒 Encerrado</span>
+            )}
+            {feedback && (
+              <span className={`badge ${feedback.ok ? 'badge-green' : 'badge-red'}`}>
+                {feedback.msg}
+              </span>
+            )}
+          </div>
+          {open && (
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="btn btn-green"
+              style={{ padding: '7px 16px', fontSize: '.78rem' }}
+            >
+              {loading ? '...' : pred ? 'Atualizar' : 'Salvar'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
