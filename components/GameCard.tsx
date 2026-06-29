@@ -86,15 +86,24 @@ export function GameCard({ game, index = 0 }: { game: GameWithPrediction; index?
         {/* Center: score / inputs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '96px', justifyContent: 'center' }}>
           {game.is_finished ? (
-            <>
-              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
-                {game.home_score}
-              </span>
-              <span style={{ color: 'var(--muted)', fontSize: '.85rem', fontWeight: 300 }}>–</span>
-              <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
-                {game.away_score}
-              </span>
-            </>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                  {game.home_score}
+                </span>
+                <span style={{ color: 'var(--muted)', fontSize: '.85rem', fontWeight: 300 }}>–</span>
+                <span className="mono" style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--amber)' }}>
+                  {game.away_score}
+                </span>
+              </div>
+              {pred ? (
+                <span className="mono" style={{ fontSize: '.72rem', color: 'var(--muted)' }}>
+                  {pred.predicted_home}–{pred.predicted_away}
+                </span>
+              ) : (
+                <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>sem palpite</span>
+              )}
+            </div>
           ) : open ? (
             <>
               <input
