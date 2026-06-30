@@ -79,6 +79,8 @@ function mapGroup(group: string | null): string | null {
   return group.replace('GROUP_', 'Group ')
 }
 
+type ScoreEntry = { home: number | null; away: number | null }
+
 export type ApiFixture = {
   id: number
   utcDate: string
@@ -87,11 +89,27 @@ export type ApiFixture = {
   group: string | null
   homeTeam: { name: string; crest: string }
   awayTeam: { name: string; crest: string }
-  score: { fullTime: { home: number | null; away: number | null } }
+  score: {
+    duration?: 'REGULAR' | 'EXTRA_TIME' | 'PENALTY_SHOOTOUT'
+    fullTime: ScoreEntry
+    regularTime?: ScoreEntry | null
+    extraTime?: ScoreEntry | null
+    penalties?: ScoreEntry | null
+  }
 }
 
 export function mapFixtureToGame(m: ApiFixture) {
   const isFinished = m.status === 'FINISHED'
+
+  // Para partidas que vão à prorrogação ou pênaltis, a API retorna o placar
+  // dos 90 min em `regularTime`. Usamos `fullTime` apenas para partidas normais.
+  const isKnockoutDecider =
+    m.score?.duration === 'EXTRA_TIME' || m.score?.duration === 'PENALTY_SHOOTOUT'
+  const ninetyMinScore =
+    isKnockoutDecider && m.score?.regularTime != null
+      ? m.score.regularTime
+      : m.score?.fullTime
+
   return {
     id: m.id,
     api_fixture_id: m.id,
@@ -102,8 +120,8 @@ export function mapFixtureToGame(m: ApiFixture) {
     game_date: m.utcDate,
     stage: mapStage(m.stage),
     group_name: mapGroup(m.group),
-    home_score: isFinished ? (m.score?.fullTime?.home ?? null) : null,
-    away_score: isFinished ? (m.score?.fullTime?.away ?? null) : null,
+    home_score: isFinished ? (ninetyMinScore?.home ?? null) : null,
+    away_score: isFinished ? (ninetyMinScore?.away ?? null) : null,
     is_finished: isFinished,
   }
 }
