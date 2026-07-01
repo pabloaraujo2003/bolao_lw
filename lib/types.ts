@@ -40,6 +40,30 @@ export type RankingRow = {
   predictions_count: number
 }
 
+export type PredictionHistoryRow = {
+  user_id: string
+  game_id: number
+  predicted_home: number
+  predicted_away: number
+  points: number
+  created_at: string
+  game: Pick<
+    Game,
+    | 'home_team'
+    | 'away_team'
+    | 'home_flag'
+    | 'away_flag'
+    | 'game_date'
+    | 'stage'
+    | 'group_name'
+    | 'home_score'
+    | 'away_score'
+    | 'is_finished'
+  >
+}
+
+export type PredictionHistoryByUser = Record<string, PredictionHistoryRow[]>
+
 export type SpecialPool = {
   id: string
   game_id: number | null

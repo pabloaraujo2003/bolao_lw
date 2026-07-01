@@ -1,15 +1,69 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCachedRanking, getCachedSettings, getCachedTotalPaid } from '@/lib/cache'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { RankingTable } from '@/components/RankingTable'
+import type { PredictionHistoryByUser, PredictionHistoryRow } from '@/lib/types'
+
+type PredictionHistoryRecord = Omit<PredictionHistoryRow, 'game'> & {
+  games: PredictionHistoryRow['game'] | PredictionHistoryRow['game'][] | null
+}
+
+async function getPredictionHistory(): Promise<PredictionHistoryByUser> {
+  const admin = createAdminClient()
+  const closedCutoff = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+
+  const { data } = await admin
+    .from('predictions')
+    .select(`
+      user_id,
+      game_id,
+      predicted_home,
+      predicted_away,
+      points,
+      created_at,
+      games!inner(
+        home_team,
+        away_team,
+        home_flag,
+        away_flag,
+        game_date,
+        stage,
+        group_name,
+        home_score,
+        away_score,
+        is_finished
+      )
+    `)
+    .lte('games.game_date', closedCutoff)
+    .order('game_date', { referencedTable: 'games', ascending: false })
+
+  return ((data as PredictionHistoryRecord[] | null) ?? []).reduce<PredictionHistoryByUser>((acc, row) => {
+    const game = Array.isArray(row.games) ? row.games[0] : row.games
+    if (!game) return acc
+
+    acc[row.user_id] ??= []
+    acc[row.user_id].push({
+      user_id: row.user_id,
+      game_id: row.game_id,
+      predicted_home: row.predicted_home,
+      predicted_away: row.predicted_away,
+      points: row.points,
+      created_at: row.created_at,
+      game,
+    })
+    return acc
+  }, {})
+}
 
 export default async function RankingPage() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
 
-  const [ranking, s, totalPaid] = await Promise.all([
+  const [ranking, s, totalPaid, predictionHistory] = await Promise.all([
     getCachedRanking(),
     getCachedSettings(),
     getCachedTotalPaid(),
+    getPredictionHistory(),
   ])
 
   const entryFee = parseFloat(s.entry_fee ?? '50')
@@ -48,7 +102,7 @@ export default async function RankingPage() {
 
       {/* Table */}
       <div className="fade-3">
-        <RankingTable rows={ranking} currentUserId={session?.user?.id} />
+        <RankingTable rows={ranking} currentUserId={session?.user?.id} predictionHistory={predictionHistory} />
       </div>
     </div>
   )
