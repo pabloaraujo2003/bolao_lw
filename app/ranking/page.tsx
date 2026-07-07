@@ -37,7 +37,7 @@ async function getPredictionHistory(): Promise<PredictionHistoryByUser> {
     .lte('games.game_date', closedCutoff)
     .order('game_date', { referencedTable: 'games', ascending: false })
 
-  return ((data as PredictionHistoryRecord[] | null) ?? []).reduce<PredictionHistoryByUser>((acc, row) => {
+  const history = ((data as PredictionHistoryRecord[] | null) ?? []).reduce<PredictionHistoryByUser>((acc, row) => {
     const game = Array.isArray(row.games) ? row.games[0] : row.games
     if (!game) return acc
 
@@ -53,6 +53,12 @@ async function getPredictionHistory(): Promise<PredictionHistoryByUser> {
     })
     return acc
   }, {})
+
+  for (const rows of Object.values(history)) {
+    rows.sort((a, b) => new Date(b.game.game_date).getTime() - new Date(a.game.game_date).getTime())
+  }
+
+  return history
 }
 
 export default async function RankingPage() {
